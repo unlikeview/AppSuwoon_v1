@@ -7,6 +7,7 @@ import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js'
 import GUI from 'lil-gui'
 
 import vertexShader from './shaders/vertex.glsl'
+import fragmentShader from './shaders/fragment.glsl'
 
 import Gray from '../static/textures/matcaps/Red.png';
 import Orange from '../static/textures/matcaps/Brown.png';
@@ -71,10 +72,26 @@ function createScene(background,matcap,geometry){
     return scene;
 }
 
+/**
+ * Sizes
+ */
+const sizes = {
+    width: window.innerWidth,
+    height: window.innerHeight
+}
 
-scenes.forEach((o,index) => {
-    o.scene = createScene(o.bg,o.matcap,o.geometry);
+
+/**
+ * Renderer
+ */
+const renderer = new THREE.WebGLRenderer({
+    canvas: canvas
 })
+renderer.setSize(sizes.width, sizes.height)
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+
+
+
 
 /**
  * Textures
@@ -134,13 +151,6 @@ const fontLoader = new FontLoader()
 //     }
 // )
 
-/**
- * Sizes
- */
-const sizes = {
-    width: window.innerWidth,
-    height: window.innerHeight
-}
 
 window.addEventListener('resize', () =>
 {
@@ -165,22 +175,49 @@ const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 
 camera.position.x = 1
 camera.position.y = 1
 camera.position.z = 10;
-scenes[0].scene.add(camera)
 
 // // Controls
 // const controls = new OrbitControls(camera, canvas)
 // controls.enableDamping = true
 
 
+scenes.forEach((o,index) => {
+    o.scene = createScene(o.bg,o.matcap,o.geometry);
 
-/**
- * Renderer
- */
-const renderer = new THREE.WebGLRenderer({
-    canvas: canvas
+    renderer.compile(o.scene,camera);
+    o.target = new THREE.WebGLRenderTarget(sizes.width, sizes.height);
 })
-renderer.setSize(sizes.width, sizes.height)
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+
+
+let aspect =1;
+let postScene = new THREE.Scene();
+let orthoCamera = null;
+
+function initpost(){
+
+    let frustumSize = 1;
+    orthoCamera = new THREE.OrthographicCamera(frustumSize*aspect/-2,frustumSize*aspect/2,frustumSize/2,frustumSize/-2,-1000,1000);
+    let material = new THREE.ShaderMaterial({
+        side : THREE.DoubleSide,
+        uniforms : {
+            uTexture1 : {value : new THREE.TextureLoader().load(bg)},
+            uTexture2 : {value : new THREE.TextureLoader().load(bg)},
+        },
+
+        vertexShader : vertexShader,
+        fragmentShader : fragmentShader
+    });
+
+    let quad = new THREE.Mesh(
+        new THREE.PlaneGeometry(1,1),
+        material
+    )
+
+    postScene.add(quad);
+
+}
+initpost();
+
 
 /**
  * Animate
@@ -196,7 +233,8 @@ const tick = () =>
     // controls.update()
 
     // Render
-    renderer.render(scenes[0].scene, camera)
+    // renderer.render(scenes[0].scene, camera)
+    renderer.render(postScene,orthoCamera)
 
     // Call tick again on the next frame
     window.requestAnimationFrame(tick)
