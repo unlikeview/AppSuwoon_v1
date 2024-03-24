@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import deviceChecker from './deviceChecker.js'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js'
 import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js'
@@ -13,15 +14,19 @@ import Green from '../static/textures/matcaps/Green.png';
 import bg from '../static/textures/matcaps/bg.png';
 import bg1 from '../static/textures/matcaps/bg1.png';
 import bg2 from '../static/textures/matcaps/bg2.png';
+
 /**
  * Base
  */
 // Debug
 const gui = new GUI()
 
-
 // Canvas
 const canvas = document.querySelector('canvas.webgl')
+
+deviceChecker();
+
+
 
 // Scene
 //const scene = new THREE.Scene()
@@ -58,6 +63,8 @@ function createScene(background,matcap,geometry){
         let random = new THREE.Vector3().randomDirection();
         let clone = mesh.clone();
         clone.position.copy(random);
+        clone.rotation.x = Math.random();
+        clone.rotation.y = Math.random(); 
         scene.add(clone)
     }
 
@@ -163,58 +170,9 @@ scenes[0].scene.add(camera)
 // // Controls
 // const controls = new OrbitControls(camera, canvas)
 // controls.enableDamping = true
-/**
- * mobile controls
- */
-let touchStart = {x:0, y:0};
-let touchMove = { x:0, y:0};
-let isDragging = false; 
-let momentum = 0;
-let dampingFactor = 0.9; 
-let inertiaDebug = {
-    value : 0.015
-}
 
-function init() {
 
-    document.addEventListener('touchstart', onTouchStart, false);
-    document.addEventListener('touchmove', onTouchMove, false);
-    document.addEventListener('touchend', onTouchEnd, false);
-}
-gui.add(inertiaDebug,'value',0,1,0.01);
 
-function onTouchStart(event) {
-    isDragging = true;
-    touchStart.x = event.touches[0].clientX;
-    touchStart.y = event.touches[0].clientY;
-    momentum = 0; // 관성 초기화
-}
-function onTouchMove(event) {
-    if (!isDragging) return;
-
-    touchMove.x = event.touches[0].clientX;
-    touchMove.y = event.touches[0].clientY;
-
-    const deltaY = (touchMove.y - touchStart.y) * inertiaDebug.value
-    camera.position.z -= deltaY;
-
-    momentum = deltaY; // 관성 업데이트
-
-    touchStart.x = touchMove.x;
-    touchStart.y = touchMove.y;
-}
-function onTouchEnd() {
-    isDragging = false;
-    applyMomentum();
-}
-
-function applyMomentum() {
-    if (Math.abs(momentum) > 0.01) {
-        camera.position.z -= momentum;
-        momentum *= dampingFactor; // 관성을 감소시킴
-        requestAnimationFrame(applyMomentum);
-    }
-}
 /**
  * Renderer
  */
@@ -228,7 +186,6 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
  * Animate
  */
 
-init();
 
 const clock = new THREE.Clock()
 
