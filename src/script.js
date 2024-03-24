@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import deviceChecker from './deviceChecker.js'
+import { val, momentum} from './deviceChecker.js'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js'
 import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js'
@@ -19,13 +20,12 @@ import bg2 from '../static/textures/matcaps/bg2.png';
  * Base
  */
 // Debug
-const gui = new GUI()
+//const gui = new GUI()
 
 // Canvas
 const canvas = document.querySelector('canvas.webgl')
 
 deviceChecker();
-
 
 
 // Scene
@@ -164,7 +164,7 @@ window.addEventListener('resize', () =>
 const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 100)
 camera.position.x = 1
 camera.position.y = 1
-camera.position.z = 10
+camera.position.z = 10;
 scenes[0].scene.add(camera)
 
 // // Controls
@@ -192,7 +192,6 @@ const clock = new THREE.Clock()
 const tick = () =>
 {
     const elapsedTime = clock.getElapsedTime()
-
     // // Update controls
     // controls.update()
 
@@ -201,6 +200,17 @@ const tick = () =>
 
     // Call tick again on the next frame
     window.requestAnimationFrame(tick)
+
+    console.log(momentum);
+    if(Math.abs(momentum)>0.01)
+    {
+        camera.position.z -= momentum;
+    }else
+    {
+        return;
+    }
+
+       
 }
 
 tick()
