@@ -5,6 +5,14 @@ import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js'
 import GUI from 'lil-gui'
 
 import vertexShader from './shaders/vertex.glsl'
+
+import Gray from '../static/textures/matcaps/Red.png';
+import Orange from '../static/textures/matcaps/Brown.png';
+import Green from '../static/textures/matcaps/Green.png';
+
+import bg from '../static/textures/matcaps/bg.png';
+import bg1 from '../static/textures/matcaps/bg1.png';
+import bg2 from '../static/textures/matcaps/bg2.png';
 /**
  * Base
  */
@@ -16,7 +24,50 @@ const gui = new GUI()
 const canvas = document.querySelector('canvas.webgl')
 
 // Scene
-const scene = new THREE.Scene()
+//const scene = new THREE.Scene()
+const scenes = [
+    {
+        bg : bg,
+        matcap : Gray,
+        geometry : new THREE.TorusGeometry(0.1, 0.01, 32, 64)
+    },
+    {
+        bg : bg1,
+        matcap : Green,
+        geometry : new THREE.TorusGeometry(0.3, 0.2, 32, 64)
+    },
+    {
+        bg : bg2,
+        matcap : Orange,
+        geometry : new THREE.TorusGeometry(0.3, 0.2, 32, 64)
+    }
+]
+
+function createScene(background,matcap,geometry){
+    let scene = new THREE.Scene();
+
+    let bgTexture = new THREE.TextureLoader().load(background);
+    scene.background = bgTexture;
+    let material = new THREE.MeshMatcapMaterial({
+        matcap : new THREE.TextureLoader().load(matcap)
+    });
+    let geo = geometry;
+    let mesh = new THREE.Mesh(geo,material);
+
+    for(let index = 0; index < 100; index ++){
+        let random = new THREE.Vector3().randomDirection();
+        let clone = mesh.clone();
+        clone.position.copy(random);
+        scene.add(clone)
+    }
+
+    return scene;
+}
+
+
+scenes.forEach((o,index) => {
+    o.scene = createScene(o.bg,o.matcap,o.geometry);
+})
 
 /**
  * Textures
@@ -30,51 +81,51 @@ matcapTexture.colorSpace = THREE.SRGBColorSpace
  */
 const fontLoader = new FontLoader()
 
-fontLoader.load(
-    '/fonts/helvetiker_regular.typeface.json',
-    (font) =>
-    {
-        // Material
-        const material = new THREE.MeshMatcapMaterial({ matcap: matcapTexture })
+// fontLoader.load(
+//     '/fonts/helvetiker_regular.typeface.json',
+//     (font) =>
+//     {
+//         // Material
+//         const material = new THREE.MeshMatcapMaterial({ matcap: matcapTexture })
 
-        // Text
-        const textGeometry = new TextGeometry(
-            'SuwoonGyo World',
-            {
-                font: font,
-                size: 0.5,
-                height: 0.2,
-                curveSegments: 12,
-                bevelEnabled: true,
-                bevelThickness: 0.03,
-                bevelSize: 0.02,
-                bevelOffset: 0,
-                bevelSegments: 5
-            }
-        )
-        textGeometry.center()
+//         // Text
+//         const textGeometry = new TextGeometry(
+//             'SuwoonGyo World',
+//             {
+//                 font: font,
+//                 size: 0.5,
+//                 height: 0.2,
+//                 curveSegments: 12,
+//                 bevelEnabled: true,
+//                 bevelThickness: 0.03,
+//                 bevelSize: 0.02,
+//                 bevelOffset: 0,
+//                 bevelSegments: 5
+//             }
+//         )
+//         textGeometry.center()
 
-        const text = new THREE.Mesh(textGeometry, material)
-        scene.add(text)
+//         const text = new THREE.Mesh(textGeometry, material)
+//         scene.add(text)
 
-        // Donuts
-        const donutGeometry = new THREE.TorusGeometry(0.3, 0.2, 32, 64)
+//         // Donuts
+//         const donutGeometry = new THREE.TorusGeometry(0.3, 0.2, 32, 64)
 
-        for(let i = 0; i < 100; i++)
-        {
-            const donut = new THREE.Mesh(donutGeometry, material)
-            donut.position.x = (Math.random() - 0.5) * 10
-            donut.position.y = (Math.random() - 0.5) * 10
-            donut.position.z = (Math.random() - 0.5) * 10
-            donut.rotation.x = Math.random() * Math.PI
-            donut.rotation.y = Math.random() * Math.PI
-            const scale = Math.random()
-            donut.scale.set(scale, scale, scale)
+//         for(let i = 0; i < 100; i++)
+//         {
+//             const donut = new THREE.Mesh(donutGeometry, material)
+//             donut.position.x = (Math.random() - 0.5) * 10
+//             donut.position.y = (Math.random() - 0.5) * 10
+//             donut.position.z = (Math.random() - 0.5) * 10
+//             donut.rotation.x = Math.random() * Math.PI
+//             donut.rotation.y = Math.random() * Math.PI
+//             const scale = Math.random()
+//             donut.scale.set(scale, scale, scale)
 
-            scene.add(donut)
-        }
-    }
-)
+//             scene.add(donut)
+//         }
+//     }
+// )
 
 /**
  * Sizes
@@ -107,11 +158,11 @@ const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 
 camera.position.x = 1
 camera.position.y = 1
 camera.position.z = 10
-scene.add(camera)
+scenes[0].scene.add(camera)
 
-// Controls
-const controls = new OrbitControls(camera, canvas)
-controls.enableDamping = true
+// // Controls
+// const controls = new OrbitControls(camera, canvas)
+// controls.enableDamping = true
 /**
  * mobile controls
  */
@@ -185,11 +236,11 @@ const tick = () =>
 {
     const elapsedTime = clock.getElapsedTime()
 
-    // Update controls
-    controls.update()
+    // // Update controls
+    // controls.update()
 
     // Render
-    renderer.render(scene, camera)
+    renderer.render(scenes[0].scene, camera)
 
     // Call tick again on the next frame
     window.requestAnimationFrame(tick)
